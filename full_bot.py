@@ -103,8 +103,8 @@ def tu(tx):d=c();r=d.execute("SELECT COUNT(*)as c FROM u WHERE pdx=?",(tx,)).fet
 
 def mk():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔗新建",callback_data="n"),InlineKeyboardButton("📋链接",callback_data="ls"),InlineKeyboardButton("📊统计",callback_data="st")],
-        [InlineKeyboardButton("📩消息",callback_data="ib"),InlineKeyboardButton("⚙️设置",callback_data="se"),InlineKeyboardButton("👑VIP",callback_data="vi")],
+        [InlineKeyboardButton("🔗新建",callback_data="n"),InlineKeyboardButton("📋链接",callback_data="ls"),InlineKeyboardButton("📩消息",callback_data="ib")],
+        [InlineKeyboardButton("⏰定时",callback_data="sch"),InlineKeyboardButton("📊统计",callback_data="st"),InlineKeyboardButton("👑VIP",callback_data="vi")],
     ])
 def sk():
     u=gu(uid)if'uid'in dir()else None
@@ -473,7 +473,18 @@ def cbh(up,ctx):
         u=gu(uid)
         if u and u.get("t")=="pro":q.edit_message_text("👑你是VIP",reply_markup=mk());return
         q.edit_message_text(f"👑VIP {P} USDT永久\n/vip 查看详情",reply_markup=mk())
-    elif d=="n":q.edit_message_text("/createlink 名称");return
+    elif d=="n":q.edit_message_text("/createlink 名称 -- 自定义内容");return
+    elif d=="sch":
+        import sqlite3;dd=sqlite3.connect("bot.db");dd.row_factory=sqlite3.Row
+        rs=dd.execute("SELECT*FROM sch WHERE ui=? AND active=1",(uid,)).fetchall();dd.close()
+        if not rs:q.edit_message_text("暂无定时消息\n\n/schedule 10:30 内容",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙首页",callback_data="ho")]]));return
+        msg="⏰ 定时消息";btns=[]
+        for r in rs:msg+=f"\n#{r['id']} 每天{r['hm']}";btns.append([InlineKeyboardButton(f"🗑#{r['id']}",callback_data=f"unsch_{r['id']}")])
+        btns.append([InlineKeyboardButton("🔙首页",callback_data="ho")])
+        q.edit_message_text(msg,reply_markup=InlineKeyboardMarkup(btns))
+    elif d.startswith("unsch_"):
+        try:i=int(d.split("_")[1]);import sqlite3;dd=sqlite3.connect("bot.db");dd.execute("UPDATE sch SET active=0 WHERE id=?",(i,));dd.commit();dd.close();q.edit_message_text("✅已删除",reply_markup=mk())
+        except:q.edit_message_text("❌失败",reply_markup=mk())
     elif d.startswith("chat_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
