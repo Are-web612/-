@@ -154,7 +154,7 @@ def cs(up,ctx):
         up.message.reply_text(
             "👋 红色闪电\n"
             "无需加好友，点击链接直接私聊\n\n"
-            "/createlink 名称 - 创建链接\n"
+            "/createlink 内容 - 创建链接\n"
             "/link - 管理所有链接\n"
             "/inbox - 联系人列表\n"
             "/vip - 升级VIP\n"
@@ -164,18 +164,14 @@ def cs(up,ctx):
 def cc(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
-    args=" ".join(ctx.args) if ctx.args else""
-    nm=args;custom=""
-    if" -- "in args:
-        parts=args.split(" -- ",1);nm=parts[0];custom=parts[1]
-    elif not nm:nm="链接"
-    lk=al(ud["i"],nm)
+    txt=" ".join(ctx.args) if ctx.args else""
+    if not txt:txt="来看看"
+    lk=al(ud["i"],"链接")
     url=f"https://t.me/{U}?start=rl_{lk['cc']}"
-    tagline="无需好友 - 点击链接进入私聊"
-    share_text=f"{custom}\n{url}\n{tagline}"if custom else f"{url}\n{tagline}"
-    msg=f"✅ {e(nm)}\n\n{url}\n\n无需好友 · 点击链接进入私聊"
-    if custom:msg=f"✅ {e(nm)}\n\n{e(custom)}\n\n{url}\n\n无需好友 · 点击链接进入私聊"
-    kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={share_text}")]])
+    tagline="📬 点击直接私聊，无需加好友"
+    share=f"{txt}\n\n{url}\n\n{tagline}"
+    msg=f"✅ 链接已创建\n\n{share}"
+    kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={share}")]])
     intro=ud.get("intro","")
     if intro:msg+=f"\n——\n{_e(intro)}"
     up.message.reply_text(msg,reply_markup=kb)
@@ -381,7 +377,7 @@ def ch(up,ctx):
     up.message.reply_text(
         "📋 全部命令\n\n"
         "【链接管理】\n"
-        "/createlink 名称 - 创建分享链接\n"
+        "/createlink 内容 - 创建分享链接\n"
         "/link - 查看所有链接\n"
         "/addgroup 名称 - 创建链接分组\n"
         "/groups - 查看分组\n\n"
@@ -490,7 +486,7 @@ def cbh(up,ctx):
         u=gu(uid)
         if u and u.get("t")=="pro":q.edit_message_text("👑你是VIP",reply_markup=mk());return
         q.edit_message_text(f"👑VIP {P} USDT永久\n/vip 查看详情",reply_markup=mk())
-    elif d=="n":q.edit_message_text("/createlink 名称 -- 自定义内容");return
+    elif d=="n":q.edit_message_text("/createlink 你的推广文案");return
     elif d=="sch":
         import sqlite3;dd=sqlite3.connect("bot.db");dd.row_factory=sqlite3.Row
         rs=dd.execute("SELECT*FROM sch WHERE ui=? AND active=1",(uid,)).fetchall();dd.close()
