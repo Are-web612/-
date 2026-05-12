@@ -147,12 +147,18 @@ def cs(up,ctx):
 def cc(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
-    nm=" ".join(ctx.args)if ctx.args else"链接"
+    args=" ".join(ctx.args) if ctx.args else""
+    nm=args;custom=""
+    if" -- "in args:
+        parts=args.split(" -- ",1);nm=parts[0];custom=parts[1]
+    elif not nm:nm="链接"
     lk=al(ud["i"],nm)
     url=f"https://t.me/{U}?start=rl_{lk['cc']}"
     tagline="无需好友 - 点击链接进入私聊"
+    share_text=f"{custom}\n{url}\n{tagline}"if custom else f"{url}\n{tagline}"
     msg=f"✅ {e(nm)}\n\n{url}\n\n无需好友 · 点击链接进入私聊"
-    kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={tagline}")]])
+    if custom:msg=f"✅ {e(nm)}\n\n{e(custom)}\n\n{url}\n\n无需好友 · 点击链接进入私聊"
+    kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={share_text}")]])
     intro=ud.get("intro","")
     if intro:msg+=f"\n——\n{_e(intro)}"
     up.message.reply_text(msg,reply_markup=kb)
@@ -270,10 +276,10 @@ def cclear(up,ctx):
     except:up.message.reply_text("❌ID必须是数字");return
     th=gt(ti)
     if not th or th["oi"]!=up.effective_user.id:up.message.reply_text("❌会话不存在");return
-    import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
+    import sqlite3;d=sqlite3.connect("bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
     up.message.reply_text("✅已清除")
 def cclear_all(up,ctx):
-    import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");uid=up.effective_user.id
+    import sqlite3;d=sqlite3.connect("bot.db");uid=up.effective_user.id
     d.execute("DELETE FROM m WHERE ti IN (SELECT id FROM th WHERE oi=?)",(uid,));d.execute("DELETE FROM th WHERE oi=?",(uid,));d.commit();d.close()
     up.message.reply_text("✅已清空所有会话")
 def cv(up,ctx):
@@ -504,7 +510,7 @@ def cbh(up,ctx):
     elif d.startswith("delth_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
-            import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
+            import sqlite3;d=sqlite3.connect("bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
             q.edit_message_text("✅已清除",reply_markup=mk())
     elif d.startswith("r_"):
         ti=int(d.split("_")[1]);th=gt(ti)
