@@ -142,15 +142,13 @@ def cc(up,ctx):
 
 def cl(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
-    gs=ggl(ud["i"])
-    if not gs:up.message.reply_text("🔗 还没有链接，/createlink 名称 创建一个");return
-    lines=["📋 我的链接"]
-    total=sum(len(g["lks"])for g in gs)
-    for g in gs:
-        lines.append(f"\n📁 {g['na']}")
-        for l in g["lks"]:lines.append(f"  #{l['i']} {e(l.get('na','未命名'))} 使用{l['uc']}次")
-    lines.append(f"\n共 {total} 个链接")
-    up.message.reply_text("\n".join(lines))
+    lks=gl(ud["i"])
+    if not lks:up.message.reply_text("🔗 还没有链接，/createlink 名称 创建一个");return
+    for l in lks:
+        nm=e(l.get("na","未命名"))
+        url=f"https://t.me/{U}?start=rl_{l['cc']}"
+        kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享到群",url=f"https://t.me/share/url?url={url}&text=📬%20点击此链接可直接联系我%2C%20无需加好友")],[InlineKeyboardButton("🗑删除",callback_data=f"dl_{l['i']}")]])
+        up.message.reply_text(f"#{l['i']} {nm}  使用{l['uc']}次\n{url}",reply_markup=kb)
 
 def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -294,7 +292,6 @@ def hm(up,ctx):
                     [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
                 ]))
             except:up.message.reply_text("❌消息发送失败");return
-            up.message.reply_text("📢 你也想要一个这样的链接？\nhttps://t.me/"+U+"\n发送 /start 创建你的专属链接")
             return
     up.message.reply_text("📋 使用 /createlink 创建链接，或 /help 查看帮助")
 
@@ -307,7 +304,13 @@ def cbh(up,ctx):
     elif d=="ls":
         lks=gl(uid)
         if not lks:q.edit_message_text("暂无链接",reply_markup=mk());return
-        q.edit_message_text("\n".join(f"#{l['i']} {e(l['na'])} 📊{l['uc']}"for l in lks),reply_markup=mk())
+        msgs=[];btns=[]
+        for l in lks[:5]:
+            url=f"https://t.me/{U}?start=rl_{l['cc']}"
+            msgs.append(f"#{l['i']} {e(l['na'])} 📊{l['uc']}\n{url}")
+            btns.append([InlineKeyboardButton(f"📤#{l['i']}分享",url=f"https://t.me/share/url?url={url}")])
+        btns.append([InlineKeyboardButton("🔙返回",callback_data="ho")])
+        q.edit_message_text("\n\n".join(msgs),reply_markup=InlineKeyboardMarkup(btns))
     elif d=="st":s=sts(uid);q.edit_message_text(f"📊会话{s['a']}未读{s['ua']}\n💬{s['tl']}🔗{s['lk']}\n📅今日{s['td']}",reply_markup=mk())
     elif d=="ib":
         ts=gts(uid)
@@ -327,6 +330,8 @@ def cbh(up,ctx):
     elif d.startswith("b_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:stb(ti,1);q.edit_message_text(f"🚫已拉黑 {e(th.get('sn','')or'用户')}",reply_markup=mk())
+    elif d.startswith("dl_"):
+        lid=int(d.split("_")[1]);dl(lid,uid);q.edit_message_text("✅链接已删除",reply_markup=mk())
     elif d.startswith("v_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
