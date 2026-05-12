@@ -130,8 +130,20 @@ def cs(up,ctx):
             up.message.reply_text(msg);return
         up.message.reply_text("❌链接无效");return
     ua=gua(u.id)
-    if ua>0:up.message.reply_text(f"⚡ 你有 {ua} 条未读消息",reply_markup=mk())
-    else:up.message.reply_text(f"👋 欢迎使用红色闪电\n\n/createlink 名称  创建链接\n/link  管理链接\n/inbox  消息列表\n/vip  会员\n/help  帮助",reply_markup=mk())
+    if ua>0:
+        up.message.reply_text(f"⚡ 你有 {ua} 条未读消息",reply_markup=mk())
+    else:
+        up.message.reply_text(
+            "👋 红色闪电\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "无需加好友，点击链接直接私聊\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "▸ /createlink 名称  创建链接\n"
+            "▸ /link  管理所有链接\n"
+            "▸ /inbox  联系人列表\n"
+            "▸ /vip  升级VIP\n"
+            "▸ /help  全部命令"
+        ,reply_markup=mk())
 
 def cc(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -285,19 +297,24 @@ def ca(up,ctx):
 
 def ch(up,ctx):
     up.message.reply_text(
+        "📋 红色闪电 - 全部命令\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        "📌 链接管理\n"
         "/createlink 名称  创建链接\n"
-        "/link  查看链接\n"
-        "/inbox  消息\n"
-        "/reply id 内容  回复\n"
-        "/intro 介绍  设置介绍\n"
-        "/addgroup 名称  分组\n"
-        "/groups  分组列表\n"
-        "/vip  会员\n"
-        "/activate TXID  激活\n"
-        "/stats  统计\n"
-        "/settings  设置\n"
-        "/block id  拉黑\n"
-        "/unblock id  解除\n"
+        "/link  查看所有链接\n"
+        "/addgroup 名称  创建分组\n"
+        "/groups  查看分组\n\n"
+        "📌 消息聊天\n"
+        "/inbox  联系人列表\n"
+        "/reply id 内容  回复消息\n"
+        "/history id  聊天记录\n"
+        "/blocks  黑名单\n\n"
+        "📌 设置与其他\n"
+        "/intro 介绍  个人简介\n"
+        "/settings  设置面板\n"
+        "/stats  使用统计\n"
+        "/vip  升级VIP\n"
+        "/activate TXID  激活VIP\n"
         "/help  帮助")
 
 def hm(up,ctx):
