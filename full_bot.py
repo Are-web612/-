@@ -138,10 +138,11 @@ def cc(up,ctx):
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
     nm=" ".join(ctx.args)if ctx.args else"链接"
     lk=al(ud["i"],nm)
-    tagline=f"\nhttps://t.me/{U}?start=rl_{lk['cc']}\n━━━━━━━━━━━━━━━━━━\n无需好友 · 点击链接进入私聊"
+    url=f"https://t.me/{U}?start=rl_{lk['cc']}"
+    msg=f"✅ {e(nm)}\n\n{url}\n\n无需好友 · 点击链接进入私聊"
     intro=ud.get("intro","")
-    if intro:tagline+=f"\n\n/intro 修改介绍\n{_e(intro)}"
-    up.message.reply_text(f"✅ {e(nm)}\n{tagline}")
+    if intro:msg+=f"\n——\n{_e(intro)}"
+    up.message.reply_text(msg)
 
 def cl(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -150,8 +151,9 @@ def cl(up,ctx):
     for l in lks:
         nm=e(l.get("na","未命名"))
         url=f"https://t.me/{U}?start=rl_{l['cc']}"
-        kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享到群",url=f"https://t.me/share/url?url={url}&text=📬%20点击此链接可直接联系我%2C%20无需加好友")],[InlineKeyboardButton("🗑删除",callback_data=f"dl_{l['i']}")]])
-        up.message.reply_text(f"#{l['i']} {nm}  使用{l['uc']}次\n{url}",reply_markup=kb)
+        share_text="无需好友 · 点击链接进入私聊"
+        kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={share_text}")],[InlineKeyboardButton("🗑删除",callback_data=f"dl_{l['i']}")]])
+        up.message.reply_text(f"#{l['i']} {nm}（使用{l['uc']}次）\n{url}",reply_markup=kb)
 
 def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -318,7 +320,7 @@ def cbh(up,ctx):
         for l in lks[:5]:
             url=f"https://t.me/{U}?start=rl_{l['cc']}"
             msgs.append(f"#{l['i']} {e(l['na'])} 📊{l['uc']}\n{url}")
-            btns.append([InlineKeyboardButton(f"📤#{l['i']}分享",url=f"https://t.me/share/url?url={url}")])
+            btns.append([InlineKeyboardButton(f"📤分享#{l['i']}",url=f"https://t.me/share/url?url={url}&text=无需好友·点击链接进入私聊")])
         btns.append([InlineKeyboardButton("🔙返回",callback_data="ho")])
         q.edit_message_text("\n\n".join(msgs),reply_markup=InlineKeyboardMarkup(btns))
     elif d=="st":s=sts(uid);q.edit_message_text(f"📊会话{s['a']}未读{s['ua']}\n💬{s['tl']}🔗{s['lk']}\n📅今日{s['td']}",reply_markup=mk())
