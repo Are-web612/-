@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """⚡ 红色闪电 - Telegram 消息中转机器人"""
-import logging, sqlite3, uuid, httpx
+import logging, sqlite3, uuid, httpx, threading, time as _time
 from datetime import datetime, timezone, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler, Filters
@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS g(id INTEGER PRIMARY KEY AUTOINCREMENT,ui,na);
 CREATE TABLE IF NOT EXISTS l(i INTEGER PRIMARY KEY AUTOINCREMENT,ui,cc UNIQUE,na,gi DEFAULT 0,uc INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS th(id INTEGER PRIMARY KEY AUTOINCREMENT,oi,si,sn,su,lc,ht DEFAULT '',bl DEFAULT 0,mc DEFAULT 0,hu DEFAULT 0,lt,ct);
 CREATE TABLE IF NOT EXISTS m(id INTEGER PRIMARY KEY AUTOINCREMENT,ti,fo DEFAULT 0,ct,ir DEFAULT 0,ca);
+CREATE TABLE IF NOT EXISTS sch(id INTEGER PRIMARY KEY AUTOINCREMENT,ui,hm TEXT,ct TEXT,active INTEGER DEFAULT 1,lt TEXT);
 """)
     d.commit();d.close();log.info("DB OK")
 
@@ -314,6 +315,45 @@ def ca(up,ctx):
         else:msg.edit_text("❌未找到有效转账。请确认：\n1.转账到正确地址\n2.金额≥5 USDT\n3.使用TRC20网络")
     except:msg.edit_text("❌验证服务暂时不可用，请稍后再试")
 
+def csch(up,ctx):
+    if not ctx.args or len(ctx.args)<2:up.message.reply_text("/schedule 10:30 消息内容");return
+    hm=ctx.args[0].strip();ct=" ".join(ctx.args[1:])
+    if ":" not in hm:up.message.reply_text("格式错误，示例：/schedule 10:30 早安");return
+    import sqlite3;d=sqlite3.connect("bot.db");d.execute("INSERT INTO sch(ui,hm,ct)VALUES(?,?,?)",(up.effective_user.id,hm,ct));d.commit();d.close()
+    up.message.reply_text(f"✅已设置每日 {hm} 发送：{ct}")
+def cschl(up,ctx):
+    import sqlite3;d=sqlite3.connect("bot.db");d.row_factory=sqlite3.Row
+    rs=d.execute("SELECT*FROM sch WHERE ui=? AND active=1",(up.effective_user.id,)).fetchall();d.close()
+    if not rs:up.message.reply_text("暂无定时消息");return
+    lines=["⏰ 定时消息"]
+    for r in rs:lines.append(f"#{r['id']} 每天{r['hm']}：{e(r['ct'])}")
+    lines.append("\n/unschedule id 删除")
+    up.message.reply_text("\n".join(lines))
+def cunsch(up,ctx):
+    if not ctx.args:up.message.reply_text("/unschedule id");return
+    try:i=int(ctx.args[0])
+    except:up.message.reply_text("❌");return
+    import sqlite3;d=sqlite3.connect("bot.db");d.execute("UPDATE sch SET active=0 WHERE id=? AND ui=?",(i,up.effective_user.id));d.commit();d.close()
+    up.message.reply_text("✅已删除")
+
+def sch_worker():
+    """定时消息后台线程"""
+    while True:
+        try:
+            import sqlite3
+            now=datetime.now().strftime("%H:%M")
+            d=sqlite3.connect("bot.db");d.row_factory=sqlite3.Row
+            rs=d.execute("SELECT*FROM sch WHERE active=1 AND hm=?",(now,)).fetchall()
+            for r in rs:
+                try:
+                    bot=Updater(token=T,use_context=True).bot
+                    bot.send_message(chat_id=r["ui"],text=r["ct"])
+                except:pass
+                d.execute("UPDATE sch SET lt=? WHERE id=?",(datetime.now().isoformat(),r["id"]))
+            d.commit();d.close()
+        except:pass
+        _time.sleep(55)  # 每分钟检查一次
+
 def ch(up,ctx):
     up.message.reply_text(
         "📋 全部命令\n\n"
@@ -493,13 +533,16 @@ def cbh(up,ctx):
                 return
 
 def reg(dp):
-    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("history",chist),("blocks",cblocks),("clear",cclear),("clearall",cclear_all),("vip",cv),("activate",ca),("help",ch)]:
+    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("history",chist),("blocks",cblocks),("clear",cclear),("clearall",cclear_all),("schedule",csch),("schedules",cschl),("unschedule",cunsch),("vip",cv),("activate",ca),("help",ch)]:
         dp.add_handler(CommandHandler(c,f))
     dp.add_handler(MessageHandler(Filters.text,hm))
     dp.add_handler(CallbackQueryHandler(cbh))
     dp.add_error_handler(lambda u,c:log.error(f"ERR:{c.error}"))
 
 def main():
-    i();u=Updater(token=T,use_context=True);reg(u.dispatcher)
+    i()
+    # 启动定时消息线程
+    t=threading.Thread(target=sch_worker,daemon=True);t.start()
+    u=Updater(token=T,use_context=True);reg(u.dispatcher)
     u.start_polling();log.info(f"✅@{U} 运行中");u.idle()
 if __name__=="__main__":main()
