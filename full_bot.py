@@ -163,8 +163,7 @@ def ci(up,ctx):
     btns=[]
     for t in ts[:10]:
         n=e(t.get("sn","")or t.get("su","未知"))
-        unread=t.get("hu",0)
-        badge="🔴"if unread else"✓"
+        badge="✓"if not t.get("hu")else""
         lt=(t.get("lt","")or"")[11:16]
         last_msgs=gtm(t['id'],1)
         preview=e(last_msgs[0]['ct'][:20])if last_msgs else""
@@ -377,7 +376,7 @@ def cbh(up,ctx):
         msg="👥 联系人";btns=[]
         for t in ts[:10]:
             n=e(t.get("sn","")or t.get("su","?"))
-            b="🔴"if t.get("hu")else"✓"
+            b="✓"if not t.get("hu")else""
             lt=(t.get("lt","")or"")[11:16]
             lm=gtm(t['id'],1)
             p=e(lm[0]['ct'][:20])if lm else""
