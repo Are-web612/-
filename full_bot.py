@@ -159,18 +159,19 @@ def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     ts=gts(ud["i"])
     if not ts:up.message.reply_text("📩 暂无消息");return
-    msg=f"👥 {len(ts)}个联系人 · 点击进入对话\n"
+    msg=f"👥 联系人\n"
     btns=[]
-    for t in ts[:8]:
+    for t in ts[:10]:
         n=e(t.get("sn","")or t.get("su","未知"))
         unread=t.get("hu",0)
-        badge="🔴"if unread else"✅"
+        badge="🔴"if unread else""
         lt=(t.get("lt","")or"")[11:16]
         last_msgs=gtm(t['id'],1)
         preview=e(last_msgs[0]['ct'][:20])if last_msgs else""
-        msg+=f"\n{badge}{n}\n{preview}  {lt}"
-        btns.append([InlineKeyboardButton(f"{n}",callback_data=f"chat_{t['id']}")])
-    msg+="\n—\n/reply id 回复  ·  /history id 历史"
+        count=f"({t['mc']})"if t['mc']>0 else""
+        msg+=f"\n{badge}{n}{count}\n{preview}  {lt}"
+        btns.append([InlineKeyboardButton(f"{badge}{n}",callback_data=f"chat_{t['id']}")])
+    msg+="\n—\n点联系人进入对话"
     up.message.reply_text(msg,reply_markup=InlineKeyboardMarkup(btns))
 
 def cst(up,ctx):
@@ -344,10 +345,10 @@ def hm(up,ctx):
                 try:
                     photos=ctx.bot.get_user_profile_photos(th["si"],limit=1)
                     if photos and photos.photos:
-                        ctx.bot.send_photo(chat_id=oi,photo=photos.photos[0][-1].file_id,caption=f"{sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")]]))
+                        ctx.bot.send_photo(chat_id=oi,photo=photos.photos[0][-1].file_id,caption=f"{sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("💬对话",callback_data=f"chat_{ti}")]]))
                     else:raise Exception("no photo")
                 except:
-                    ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")]]))
+                    ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("💬对话",callback_data=f"chat_{ti}")]]))
             except:up.message.reply_text("❌消息发送失败")
             return
     # 默认提示
@@ -374,15 +375,17 @@ def cbh(up,ctx):
     elif d=="ib":
         ts=gts(uid)
         if not ts:q.edit_message_text("暂无消息",reply_markup=mk());return
-        msg="👥 联系人"
-        for t in ts[:8]:
+        msg="👥 联系人";btns=[]
+        for t in ts[:10]:
             n=e(t.get("sn","")or t.get("su","?"))
             b="🔴"if t.get("hu")else""
             lt=(t.get("lt","")or"")[11:16]
             lm=gtm(t['id'],1)
             p=e(lm[0]['ct'][:20])if lm else""
-            mc=t['mc'];msg+=f"\n\n{n}({mc})"if b else f"\n\n{n}";msg+=f"\n{p}\n{lt}"
-        q.edit_message_text(msg,reply_markup=mk())
+            msg+=f"\n{b}{n}\n{p}  {lt}"
+            btns.append([InlineKeyboardButton(f"{b}{n}",callback_data=f"chat_{t['id']}")])
+        btns.append([InlineKeyboardButton("🏠首页",callback_data="ho")])
+        q.edit_message_text(msg,reply_markup=InlineKeyboardMarkup(btns))
     elif d=="se":q.edit_message_text("⚙️设置页面",reply_markup=sk());return
     elif d=="vi":
         u=gu(uid)
