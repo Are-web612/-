@@ -10,10 +10,19 @@ T="8721428580:AAFnvVTN_WeI1hJUfV22kfJFmLqFc0BxWb4"
 U="HSSGMCBot"
 W="TP7VvGHa7YzsMsM2Gqje6DdgGeBcpkkRuh"
 P=5
+CH="@HSSGPDZ"
 logging.basicConfig(level=logging.INFO,format="%(asctime)s - %(message)s")
 log=logging.getLogger("bot")
 
 def e(t): return _e(str(t or ""))
+
+def check_sub(bot, uid, uname=""):
+    """检查用户是否在频道里，不在则返回提示键盘"""
+    try:
+        m=bot.get_chat_member(chat_id=CH, user_id=uid)
+        if m.status in ("member","creator","administrator"):return None
+    except:pass
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🔔 点击关注频道",url=f"https://t.me/{CH[1:]}")]])
 
 def c():
     co=sqlite3.connect("bot.db");co.row_factory=sqlite3.Row;return co
@@ -115,7 +124,15 @@ def sk():
     ])
 
 def cs(up,ctx):
-    u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
+    u=up.effective_user;uid=u.id
+    # 频道关注检查
+    chk=check_sub(ctx.bot, uid, u.username or"")
+    if chk:
+        up.message.reply_text(
+            f"🔒 请先关注频道 {CH}\n\n关注后点击下方按钮重新进入，或回复 /start",
+            reply_markup=chk)
+        return
+    ud=goc(uid,u.username or"",u.first_name or"")
     if ctx.args and ctx.args[0][:3]=="rl_":
         code=ctx.args[0][3:];lk=glc(code)
         if lk:
