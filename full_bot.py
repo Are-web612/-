@@ -263,6 +263,18 @@ def cblocks(up,ctx):
     for t in ts:lines.append(f"#{t['id']} {e(t.get('sn','')or t.get('su','未知'))}")
     lines.append("\n/unblock id 解除")
     up.message.reply_text("\n".join(lines))
+def cclear(up,ctx):
+    if not ctx.args:up.message.reply_text("/clear 会话ID");return
+    try:ti=int(ctx.args[0])
+    except:up.message.reply_text("❌ID必须是数字");return
+    th=gt(ti)
+    if not th or th["oi"]!=up.effective_user.id:up.message.reply_text("❌会话不存在");return
+    import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
+    up.message.reply_text("✅已清除")
+def cclear_all(up,ctx):
+    import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");uid=up.effective_user.id
+    d.execute("DELETE FROM m WHERE ti IN (SELECT id FROM th WHERE oi=?)",(uid,));d.execute("DELETE FROM th WHERE oi=?",(uid,));d.commit();d.close()
+    up.message.reply_text("✅已清空所有会话")
 def cv(up,ctx):
     u=gu(up.effective_user.id)
     if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP，感谢支持！\n\n所有功能永久可用，无任何限制。");return
@@ -430,7 +442,7 @@ def cbh(up,ctx):
             mr(ti);#标记已读
             q.edit_message_text("\n".join(lines),reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("📋预设",callback_data=f"pr_{ti}")],
-                [InlineKeyboardButton("🔙列表",callback_data="ib"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
+                [InlineKeyboardButton("🔙列表",callback_data="ib"),InlineKeyboardButton("🗑清除",callback_data=f"delth_{ti}")],
             ]))
     elif d.startswith("pr_"):
         ti=int(d.split("_")[1])
@@ -449,6 +461,11 @@ def cbh(up,ctx):
                 try:ctx.bot.send_message(chat_id=th["si"],text=text)
                 except:pass
                 q.edit_message_text(text)
+    elif d.startswith("delth_"):
+        ti=int(d.split("_")[1]);th=gt(ti)
+        if th:
+            import sqlite3;d=sqlite3.connect("/opt/red-lightning/bot.db");d.execute("DELETE FROM m WHERE ti=?",(ti,));d.execute("DELETE FROM th WHERE id=?",(ti,));d.commit();d.close()
+            q.edit_message_text("✅已清除",reply_markup=mk())
     elif d.startswith("r_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
@@ -476,7 +493,7 @@ def cbh(up,ctx):
                 return
 
 def reg(dp):
-    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("history",chist),("blocks",cblocks),("vip",cv),("activate",ca),("help",ch)]:
+    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("history",chist),("blocks",cblocks),("clear",cclear),("clearall",cclear_all),("vip",cv),("activate",ca),("help",ch)]:
         dp.add_handler(CommandHandler(c,f))
     dp.add_handler(MessageHandler(Filters.text,hm))
     dp.add_handler(CallbackQueryHandler(cbh))
