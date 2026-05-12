@@ -169,8 +169,8 @@ def cc(up,ctx):
     lk=al(ud["i"],"链接")
     url=f"https://t.me/{U}?start=rl_{lk['cc']}"
     tagline="📬 点击直接私聊，无需加好友"
-    share=f"{txt}\n\n{url}\n\n{tagline}"
-    msg=f"✅ 链接已创建\n\n{share}"
+    share=txt
+    msg=f"✅ 链接已创建\n\n{share}\n\n{url}\n\n{tagline}"
     kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={share}")]])
     intro=ud.get("intro","")
     if intro:msg+=f"\n——\n{_e(intro)}"
