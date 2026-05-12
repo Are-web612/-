@@ -159,14 +159,18 @@ def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     ts=gts(ud["i"])
     if not ts:up.message.reply_text("📩 暂无消息");return
-    lines=[f"📩 {len(ts)}个会话"]
-    for t in ts:
+    msg=f"👥 联系人（{len(ts)}）"
+    for t in ts[:8]:
         n=e(t.get("sn","")or t.get("su","未知"))
-        st="📩未读"if t.get("hu")else"✅已读"
-        lt=(t.get("lt","")or"")[:16].replace("T"," ")
-        lines.append(f"#{t['id']} {n} {st}\n{t['mc']}条 · {lt}")
-    lines.append("—\n/reply id 回复")
-    up.message.reply_text("\n\n".join(lines))
+        unread=t.get("hu",0)
+        badge=f"  🔴{t['mc']}"if unread else""
+        lt=(t.get("lt","")or"")[11:16]
+        # 获取最后一条消息预览
+        last_msgs=gtm(t['id'],1)
+        preview=e(last_msgs[0]['ct'][:25])if last_msgs else""
+        msg+=f"\n\n{n}{badge}\n{preview}\n{lt}"
+    msg+="\n—\n回复：/reply 会话ID 内容"
+    up.message.reply_text(msg)
 
 def cst(up,ctx):
     s=sts(up.effective_user.id)
@@ -326,7 +330,15 @@ def cbh(up,ctx):
     elif d=="ib":
         ts=gts(uid)
         if not ts:q.edit_message_text("暂无消息",reply_markup=mk());return
-        q.edit_message_text("\n".join(f"#{t['id']} {e(t.get('sn','?'))} {'未读'if t.get('hu')else'已读'}"for t in ts),reply_markup=mk())
+        msg="👥 联系人"
+        for t in ts[:8]:
+            n=e(t.get("sn","")or t.get("su","?"))
+            b="🔴"if t.get("hu")else""
+            lt=(t.get("lt","")or"")[11:16]
+            lm=gtm(t['id'],1)
+            p=e(lm[0]['ct'][:20])if lm else""
+            mc=t['mc'];msg+=f"\n\n{n}({mc})"if b else f"\n\n{n}";msg+=f"\n{p}\n{lt}"
+        q.edit_message_text(msg,reply_markup=mk())
     elif d=="se":q.edit_message_text("⚙️设置页面",reply_markup=sk());return
     elif d=="vi":
         u=gu(uid)
