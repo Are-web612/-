@@ -310,7 +310,7 @@ def hm(up,ctx):
                 on=th.get("sn","")or"对方"
                 ctx.bot.send_message(chat_id=th["si"],text=txt)
                 n=e(th.get("sn","")or"对方")
-                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}\n✓",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💬继续回复",callback_data=f"chat_{cc}"),InlineKeyboardButton("🔙列表",callback_data="ib")]]))
+                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💬继续回复",callback_data=f"chat_{cc}"),InlineKeyboardButton("🔙列表",callback_data="ib")]]))
             except:up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("current_chat",None)
         return
@@ -324,7 +324,7 @@ def hm(up,ctx):
             try:
                 on=th.get("sn","")or"对方"
                 ctx.bot.send_message(chat_id=th["si"],text=txt)
-                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}\n✓✓")
+                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}")
             except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("reply_thread_id",None)
         return
@@ -422,7 +422,7 @@ def cbh(up,ctx):
                 sm(ti,True,text);mr(ti,uid)
                 try:ctx.bot.send_message(chat_id=th["si"],text=text)
                 except:pass
-                q.edit_message_text(f"{text}\n✓✓")
+                q.edit_message_text(text)
     elif d.startswith("r_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
