@@ -1,0 +1,437 @@
+#!/usr/bin/env python3
+"""⚡ 红色闪电 - 完美版"""
+import logging, sqlite3, uuid, httpx
+from datetime import datetime, timezone, timedelta
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackQueryHandler, Filters
+from html import escape as _e
+
+T="8721428580:AAFnvVTN_WeI1hJUfV22kfJFmLqFc0BxWb4";U="HSSGMCBot"
+W="TP7VvGHa7YzsMsM2Gqje6DdgGeBcpkkRuh";P=5
+logging.basicConfig(level=logging.INFO,format="%(asctime)s - %(message)s");log=logging.getLogger("⚡")
+LN="\n"
+def e(t): return _e(str(t or ""))
+S="─"*28;SEP="─"*36
+# ─── 数据库 ───
+def c():
+    co=sqlite3.connect("bot.db");co.row_factory=sqlite3.Row;return co
+def init():
+    d=c()
+    d.executescript("CREATE TABLE IF NOT EXISTS u(i PRIMARY KEY,n,t DEFAULT 'free',intro DEFAULT '',te,pdx DEFAULT '');CREATE TABLE IF NOT EXISTS g(id INTEGER PRIMARY KEY AUTOINCREMENT,ui,na);CREATE TABLE IF NOT EXISTS l(i INTEGER PRIMARY KEY AUTOINCREMENT,ui,cc UNIQUE,na,gi DEFAULT 0,uc INTEGER DEFAULT 0);CREATE TABLE IF NOT EXISTS th(id INTEGER PRIMARY KEY AUTOINCREMENT,oi,si,sn,su,lc,bl DEFAULT 0,mc DEFAULT 0,hu DEFAULT 0,lt,ct);CREATE TABLE IF NOT EXISTS m(id INTEGER PRIMARY KEY AUTOINCREMENT,ti,fo DEFAULT 0,ct,ir DEFAULT 0,ca);")
+    d.commit();d.close();log.info("数据库 OK")
+def gu(i):
+    d=c();r=d.execute("SELECT * FROM u WHERE i=?",(i,)).fetchone();d.close();return dict(r)if r else None
+def goc(i,un="",fn=""):
+    d=c();r=d.execute("SELECT * FROM u WHERE i=?",(i,)).fetchone()
+    if r:d.close();return dict(r)
+    te=(datetime.now(timezone.utc)+timedelta(hours=24)).isoformat()
+    d.execute("INSERT INTO u(i,n,te) VALUES(?,?,?)",(i,fn,te));d.commit()
+    r=d.execute("SELECT * FROM u WHERE i=?",(i,)).fetchone();d.close();return dict(r)
+def uu(i,**kw):
+    d=c();d.execute(f"UPDATE u SET {','.join(f'{k}=?'for k in kw)} WHERE i=?",list(kw.values())+[i]);d.commit();d.close()
+def tk(i):
+    u=gu(i)
+    if not u:return True
+    if u.get("t")=="pro":return True
+    te=u.get("te")
+    if not te:return True
+    try:return datetime.strptime(te[:19],"%Y-%m-%dT%H:%M:%S")>datetime.now(timezone.utc)
+    except:return True
+def tl(i):
+    u=gu(i)
+    if not u or u.get("t")=="pro":return "无限(VIP)"
+    te=u.get("te")
+    if not te:return "24小时"
+    try:
+        r=datetime.strptime(te[:19],"%Y-%m-%dT%H:%M:%S")-datetime.now(timezone.utc);secs=int(r.total_seconds())
+        if secs<=0:return "已过期"
+        return f"{secs//3600}小时{(secs%3600)//60}分钟"
+    except:return "-"
+def ag(ui,na):
+    d=c();d.execute("INSERT INTO g(ui,na) VALUES(?,?)",(ui,na));d.commit();r=d.execute("SELECT * FROM g WHERE id=last_insert_rowid()").fetchone();d.close();return dict(r)
+def gg(ui):
+    d=c();rs=d.execute("SELECT * FROM g WHERE ui=?",(ui,)).fetchall();d.close();return[dict(r)for r in rs]
+def dg(id_,ui):
+    d=c();d.execute("DELETE FROM g WHERE id=? AND ui=?",(id_,ui));d.execute("UPDATE l SET gi=0 WHERE gi=? AND ui=?",(id_,ui));d.commit();d.close()
+def al(ui,na,gi=0):
+    cc=uuid.uuid4().hex[:10];d=c()
+    d.execute("INSERT INTO l(ui,cc,na,gi) VALUES(?,?,?,?)",(ui,cc,na,gi));d.commit()
+    r=d.execute("SELECT * FROM l WHERE cc=?",(cc,)).fetchone();d.close();return dict(r)
+def gl(ui):
+    d=c();rs=d.execute("SELECT * FROM l WHERE ui=? ORDER BY i DESC",(ui,)).fetchall();d.close();return[dict(r)for r in rs]
+def ggl(ui):
+    gs=gg(ui);lks=gl(ui);r=[]
+    ug=[l for l in lks if l["gi"]==0]
+    if ug:r.append({"gi":0,"na":"未分组","lks":ug})
+    for g in gs:
+        ml=[l for l in lks if l["gi"]==g["id"]]
+        if ml:r.append({"gi":g["id"],"na":g["na"],"lks":ml})
+    return r
+def glc(cc):
+    d=c();r=d.execute("SELECT * FROM l WHERE cc=?",(cc,)).fetchone();d.close();return dict(r)if r else None
+def il(cc):
+    d=c();d.execute("UPDATE l SET uc=uc+1 WHERE cc=?",(cc,));d.commit();d.close()
+def dl(id_,ui):
+    d=c();d.execute("UPDATE l SET gi=-1 WHERE i=? AND ui=?",(id_,ui));d.commit();d.close()
+def gt(id_):
+    d=c();r=d.execute("SELECT * FROM th WHERE id=?",(id_,)).fetchone();d.close();return dict(r)if r else None
+def gct(oi,si,sn,su,cc):
+    d=c();r=d.execute("SELECT * FROM th WHERE oi=? AND si=?",(oi,si)).fetchone()
+    if r:d.close();return dict(r)
+    n=datetime.now().isoformat()
+    d.execute("INSERT INTO th(oi,si,sn,su,lc,ct) VALUES(?,?,?,?,?,?)",(oi,si,sn,su,cc,n));d.commit()
+    r=d.execute("SELECT * FROM th WHERE id=last_insert_rowid()").fetchone();d.close();return dict(r)
+def gts(ui):
+    d=c();rs=d.execute("SELECT * FROM th WHERE oi=? AND bl=0 ORDER BY lt DESC",(ui,)).fetchall();d.close();return[dict(r)for r in rs]
+def gbt(ui):
+    d=c();rs=d.execute("SELECT * FROM th WHERE oi=? AND bl=1 ORDER BY lt DESC",(ui,)).fetchall();d.close();return[dict(r)for r in rs]
+def stb(id_,v):
+    d=c();d.execute("UPDATE th SET bl=? WHERE id=?",(v,id_));d.commit();d.close()
+def sm(ti,fo,ct):
+    n=datetime.now().isoformat();d=c()
+    d.execute("INSERT INTO m(ti,fo,ct,ir,ca) VALUES(?,?,?,?,?)",(ti,1 if fo else 0,ct,1 if fo else 0,n))
+    d.execute("UPDATE th SET mc=mc+1,lt=?,hu=CASE WHEN ? THEN hu ELSE 1 END WHERE id=?",(n,fo,ti))
+    d.commit();d.close()
+def gtm(ti,lm=50):
+    d=c();rs=d.execute("SELECT * FROM m WHERE ti=? ORDER BY ca DESC LIMIT ?",(ti,lm)).fetchall();d.close();return[dict(r)for r in reversed(rs)]
+def gmc(ti):
+    d=c();r=d.execute("SELECT COUNT(*)as c FROM m WHERE ti=? AND fo=0 AND ir=0",(ti,)).fetchone();d.close();return r["c"]if r else 0
+def mr(ti,oi=None):
+    d=c()
+    d.execute("UPDATE m SET ir=1 WHERE ti=? AND fo=0",(ti,))
+    if oi:d.execute("UPDATE th SET hu=0 WHERE id=? AND oi=?",(ti,oi))
+    d.commit();d.close()
+def gua(ui):
+    d=c();r=d.execute("SELECT COUNT(*)as c FROM th WHERE oi=? AND bl=0 AND hu=1",(ui,)).fetchone();d.close();return r["c"]if r else 0
+def sts(ui):
+    d=c()
+    a=d.execute("SELECT COUNT(*)as c FROM th WHERE oi=? AND bl=0",(ui,)).fetchone()["c"]
+    tl=d.execute("SELECT COUNT(*)as c FROM m m JOIN th t ON m.ti=t.id WHERE t.oi=?",(ui,)).fetchone()["c"]
+    lk=d.execute("SELECT COUNT(*)as c FROM l WHERE ui=? AND gi>=0",(ui,)).fetchone()["c"]
+    td=datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    td_m=d.execute("SELECT COUNT(*)as c FROM m m JOIN th t ON m.ti=t.id WHERE t.oi=? AND m.ca LIKE ?",(ui,f"{td}%")).fetchone()["c"]
+    ua=gua(ui);d.close();return{"a":a,"tl":tl,"lk":lk,"td":td_m,"ua":ua}
+def sv(ui,tx=""):
+    d=c();d.execute("UPDATE u SET t='pro',pdx=? WHERE i=?",(tx,ui));d.commit();d.close()
+def tu(tx):
+    d=c();r=d.execute("SELECT COUNT(*)as c FROM u WHERE pdx=?",(tx,)).fetchone();d.close();return(r["c"]if r else 0)>0
+
+# ─── 键盘 ───
+def mk():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔗新建",callback_data="n"),InlineKeyboardButton("📋链接",callback_data="ls"),InlineKeyboardButton("📊统计",callback_data="st")],
+        [InlineKeyboardButton("📩消息",callback_data="ib"),InlineKeyboardButton("⚙️设置",callback_data="se"),InlineKeyboardButton("👑VIP",callback_data="vi")],
+    ])
+def sk():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🟢名称",callback_data="tn"),InlineKeyboardButton("🟢渠道",callback_data="tc"),InlineKeyboardButton("🔴免打扰",callback_data="td")],
+        [InlineKeyboardButton("🔴日报",callback_data="tg"),InlineKeyboardButton("🟢通知",callback_data="tno"),InlineKeyboardButton("🏠首页",callback_data="ho")],
+    ])
+
+# ─── 排版 ───
+def card(title,body):
+    return f"┌─ {title}{LN}{LN}{body.strip()}{LN}└{'─'*20}"
+
+# ═══════════════════════════════════════════════════════════════
+def cs(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    if ctx.args and ctx.args[0][:3]=="rl_":
+        cc=ctx.args[0][3:];lk=glc(cc)
+        if lk:
+            owner=gu(lk["ui"])
+            if not owner:up.message.reply_text("❌对方已停止");return
+            if not tk(lk["ui"]):up.message.reply_text("⏰对方试用已结束");return
+            il(cc);s=up.effective_user;th=gct(lk["ui"],s.id,s.first_name or "",s.username or "",cc)
+            ctx.user_data["ti"]=th["id"];ctx.user_data["oi"]=lk["ui"]
+            on=owner.get("n","对方")
+            ln=lk.get("na","")
+            ch=f"\n渠道：{e(ln)}"if ln else""
+            up.message.reply_text(f"📬<b>正在联系 {e(on)}</b>{ch}{LN}{LN}直接发消息即可，对方回复也会通知你。",parse_mode="HTML")
+        else:up.message.reply_text("❌链接无效")
+        return
+    ua=gua(u.id)
+    if ua>0:up.message.reply_text(f"⚡<b>欢迎回来</b>{LN}📩{ua}条未读消息",parse_mode="HTML",reply_markup=mk())
+    else:up.message.reply_text(f"👋<b>红色闪电</b>{LN}{LN}生成链接→发到群里→别人点开就能联系你{LN}无需加好友{LN}{LN}🚀<b>三步开始</b>{LN}1. /createlink 群名{LN}2. 把链接发到群里{LN}3. 等消息来找你",parse_mode="HTML",reply_markup=mk())
+
+def cc(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    uid=ud["i"]
+    if not tk(uid):up.message.reply_text(f"⏰<b>免费试用已结束</b>{LN}{LN}/vip 查看支付方式{LN}仅需 {P} USDT 买断永久使用",parse_mode="HTML");return
+    nm=" ".join(ctx.args)if ctx.args else"链接";gi=0;args=ctx.args or []
+    i=0
+    while i<len(args):
+        if args[i]=="/g"and i+1<len(args):
+            try:gi=int(args[i+1]);i+=2
+            except:i+=1
+        else:nm=" ".join(args[i:]);break
+    lk=al(uid,nm,gi)
+    url=f"https://t.me/{U}?start=rl_{lk['cc']}"
+    intro=ud.get("intro","")
+    tagline=f"{LN}{LN}📬<b>点击此链接可直接联系我，无需加好友</b>{LN}<code>{e(url)}</code>"
+    if intro:tagline+=f"{LN}{LN}📋<b>带介绍的推广文案</b>{LN}━{S}{LN}{e(intro)}{LN}{e(url)}{LN}━{S}{LN}<i>/intro 可修改介绍</i>"
+    up.message.reply_text(f"✅<b>链接已创建</b>{LN}{LN}<b>{e(nm)}</b>{tagline}",parse_mode="HTML")
+
+def cl(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    gs=ggl(ud["i"])
+    if not gs:up.message.reply_text("🔗<b>还没有链接</b>{LN}{LN}/createlink 名称 创建一个",parse_mode="HTML");return
+    lines=[f"🔗<b>我的链接</b>",f"━{SEP}"]
+    total=sum(len(g["lks"])for g in gs)
+    for g in gs:
+        lines.append(f"📁<b>{e(g['na'])}</b>")
+        for l in g["lks"]:lines.append(f"🔗{e(l.get('na','未命名'))}📊{l['uc']}🆔#{l['i']}")
+    lines.append(f"━{SEP}")
+    lines.append(f"共{total}个 · /createlink 新建")
+    up.message.reply_text(LN.join(lines),parse_mode="HTML")
+
+def ci(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    ts=gts(ud["i"])
+    if not ts:up.message.reply_text("📩<b>消息列表</b>{LN}{LN}还没有人联系你",parse_mode="HTML");return
+    lines=[f"📩<b>消息列表 ({len(ts)})</b>",f"━{SEP}"]
+    for t in ts:
+        n=e(t.get("sn","")or t.get("su","未知"))
+        un=f"@{e(t.get('su',''))}"if t.get("su")else""
+        st="📩未读"if t.get("hu")else"✅已读"
+        lt=(t.get("lt","")or"")[:16].replace("T"," ")
+        lines.append(f"{LN}👤<b>{n}</b>{un}{st}{LN}💬{t['mc']}条·{lt}{LN}🆔#{t['id']}")
+    lines.append(f"{LN}━{SEP}{LN}/reply id 内容 回复")
+    up.message.reply_text(LN.join(lines),parse_mode="HTML")
+
+def cst(up,ctx):
+    s=sts(up.effective_user.id)
+    up.message.reply_text(f"📊<b>数据统计</b>{LN}━{SEP}{LN}👥会话{s['a']}{LN}📩未读{s['ua']}{LN}💬总计{s['tl']}{LN}🔗链接{s['lk']}{LN}📅今日{s['td']}{LN}━{SEP}{LN}<i>实时数据</i>",parse_mode="HTML")
+
+def cse(up,ctx):
+    u=gu(up.effective_user.id)
+    if not u:return
+    def t(v):return"🟢"if v else"🔴"
+    up.message.reply_html(
+        f"⚙️<b>红色闪电 设置</b>{LN}━{SEP}"
+        f"{LN}{t(u.get('sn',1))} 显示发送者名称"
+        f"{LN}{t(u.get('sc',1))} 显示来源渠道"
+        f"{LN}{t(not u.get('dnd',0))} 免打扰"
+        f"{LN}{t(u.get('dg',0))} 日报推送"
+        f"{LN}{t(u.get('no',1))} 消息通知"
+        f"{LN}━{SEP}{LN}点击对应按钮开关",
+        reply_markup=sk())
+
+def cintro(up,ctx):
+    u=gu(up.effective_user.id)
+    if not ctx.args:
+        cur=e(u.get("intro","")or"")
+        t=f"{LN}当前介绍：{LN}{cur}"if cur else""
+        up.message.reply_html(f"📋<b>个人介绍</b>{LN}━{SEP}{t}{LN}{LN}/intro 你的介绍");return
+    uu(u["i"],intro=" ".join(ctx.args))
+    up.message.reply_html("✅个人介绍已设置")
+
+def ci_clr(up,ctx):
+    uu(up.effective_user.id,intro="");up.message.reply_html("✅已清除")
+
+def cag(up,ctx):
+    if not ctx.args:up.message.reply_html("📁/addgroup 名称");return
+    g=ag(up.effective_user.id," ".join(ctx.args))
+    up.message.reply_html(f"✅分组 #{g['id']} {e(g['na'])}")
+
+def cgg(up,ctx):
+    gs=gg(up.effective_user.id)
+    if not gs:up.message.reply_html("📁暂无分组");return
+    lines=[f"📁<b>分组 ({len(gs)})</b>",f"━{SEP}"]
+    for g in gs:lines.append(f"#{g['id']} {e(g['na'])}")
+    lines.append(f"{LN}/addgroup 名称 · /rmgroup id")
+    up.message.reply_html(LN.join(lines))
+
+def crg(up,ctx):
+    if not ctx.args:up.message.reply_html("❌/rmgroup id");return
+    try:gi=int(ctx.args[0])
+    except:up.message.reply_html("❌id必须是数字");return
+    dg(gi,up.effective_user.id);up.message.reply_html("✅已删除")
+
+def cr(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    if not ctx.args or len(ctx.args)<2:up.message.reply_html("📋/reply 会话ID 内容");return
+    try:ti=int(ctx.args[0])
+    except:up.message.reply_html("❌必须是数字");return
+    text=" ".join(ctx.args[1:]);th=gt(ti)
+    if not th or th["oi"]!=ud["i"]:up.message.reply_html("❌会话不存在");return
+    sm(ti,True,text);mr(ti,ud["i"])
+    try:
+        on=th.get("sn","")or"对方"
+        ctx.bot.send_message(chat_id=th["si"],text=f"💬{e(on)}回复你了{LN}━{S}{LN}{e(text)}",parse_mode="HTML")
+        up.message.reply_html(f"✅已回复 {e(th.get('sn','')or th.get('su','用户'))}")
+    except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_html("❌回复发送失败")
+
+def cbk(up,ctx):
+    if not ctx.args:up.message.reply_html("📋/block 会话ID");return
+    try:ti=int(ctx.args[0])
+    except:up.message.reply_html("❌必须是数字");return
+    th=gt(ti)
+    if not th:up.message.reply_html("❌不存在");return
+    stb(ti,1);up.message.reply_html(f"🚫已拉黑 {e(th.get('sn','')or th.get('su','用户'))}")
+
+def cub(up,ctx):
+    if not ctx.args:up.message.reply_html("📋/unblock 会话ID");return
+    try:ti=int(ctx.args[0])
+    except:up.message.reply_html("❌必须是数字");return
+    th=gt(ti)
+    if not th:up.message.reply_html("❌不存在");return
+    stb(ti,0);up.message.reply_html(f"✅已解除 {e(th.get('sn','')or th.get('su','用户'))}")
+
+def cv(up,ctx):
+    u=gu(up.effective_user.id)
+    if u and u.get("t")=="pro":up.message.reply_html("👑<b>你是VIP用户</b>{LN}━{SEP}{LN}感谢支持！所有功能永久可用。");return
+    r=tl(up.effective_user.id)
+    up.message.reply_html(f"👑<b>红色闪电 VIP</b>{LN}━{SEP}{LN}⏰试用剩余：{r}{LN}━{SEP}{LN}<b>免费版</b>：24小时试用{LN}<b>VIP</b>：{P} USDT 永久买断{LN}━{SEP}{LN}转账 USDT-TRC20 到：{LN}<code>{W}</code>{LN}━{SEP}{LN}支付后发送 /activate TXID")
+
+def ca(up,ctx):
+    u=up.effective_user;ud=goc(u.id,u.username or "",u.first_name or "")
+    if not ctx.args:
+        up.message.reply_html(f"📋<b>激活VIP</b>{LN}━{SEP}{LN}1.转账 {P} USDT(TRC20) 到：{LN}<code>{W}</code>{LN}2.复制交易哈希(TXID){LN}3.发送 /activate TXID");return
+    tx=ctx.args[0].strip()
+    if len(tx)<10:up.message.reply_html("❌TXID格式不正确");return
+    if tu(tx):up.message.reply_html("❌该TXID已被使用");return
+    msg=up.message.reply_html("🔄正在验证链上交易，请稍候...")
+    try:
+        r=httpx.get(f"https://api.trongrid.io/v1/transactions/{tx}/events",timeout=15)
+        if r.status_code!=200:msg.edit_text("❌无法验证");return
+        ok=False;amt=0
+        for ev in r.json().get("data",[]):
+            if ev.get("contract_address")!="TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t":continue
+            if ev.get("event_name")!="Transfer":continue
+            res=ev.get("result",{})
+            if res.get("to")!=W:continue
+            try:amt=int(res.get("value","0"))
+            except:continue
+            if amt>=P*10**6:ok=True;break
+        if ok:sv(ud["i"],tx);msg.edit_text(f"✅<b>VIP已激活！</b>{LN}━{SEP}{LN}交易已验证通过{LN}金额：{amt/10**6:.1f} USDT{LN}TXID：<code>{tx[:16]}...</code>{LN}━{SEP}{LN}感谢支持！",parse_mode="HTML")
+        else:msg.edit_text("❌未找到有效转账。确认：1.转账到正确地址 2.金额≥5 USDT 3.使用TRC20网络")
+    except Exception as ex:log.error(f"验证:{ex}");msg.edit_text("❌验证服务暂时不可用")
+
+def ch(up,ctx):
+    up.message.reply_html(
+        f"⚡<b>红色闪电 帮助</b>{LN}━{SEP}"
+        f"{LN}📌<b>核心命令</b>"
+        f"{LN}/createlink 名称 创建链接"
+        f"{LN}/link 查看所有链接"
+        f"{LN}/inbox 消息列表"
+        f"{LN}/reply id 内容 回复某人"
+        f"{LN}{LN}📌<b>分组管理</b>"
+        f"{LN}/addgroup 名称 创建分组"
+        f"{LN}/groups 查看分组"
+        f"{LN}/rmgroup id 删除分组"
+        f"{LN}{LN}📌<b>设置</b>"
+        f"{LN}/intro 介绍 设置个人介绍"
+        f"{LN}/settings 设置面板"
+        f"{LN}/stats 数据统计"
+        f"{LN}{LN}📌<b>VIP</b>"
+        f"{LN}/vip 价格和支付方式"
+        f"{LN}/activate TXID 激活VIP"
+        f"{LN}{LN}📌<b>其他</b>"
+        f"{LN}/block id 拉黑"
+        f"{LN}/unblock id 解除")
+# ─── 消息转发 ───
+def hm(up,ctx):
+    ti=ctx.user_data.get("ti");oi=ctx.user_data.get("oi")
+    if ti and oi:
+        th=gt(ti)
+        if th:
+            if th.get("bl"):up.message.reply_html("🚫对方已将你拉黑");return
+            if not tk(oi):up.message.reply_html("⏰对方免费试用已结束");return
+            txt=up.message.text or "";sm(ti,False,txt)
+            bu=U;sn=e(th.get("sn","")or th.get("su","用户"))
+            if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
+            cn="";lc=th.get("lc","")
+            if lc:lk=glc(lc)
+            if lk:cn=e(lk.get("na",""))
+            msgs=gtm(ti,3);mc=len(msgs);st="🆕首次"if mc<=1 else f"第{mc}条"
+            ch_str=f"\n📢{cn}"if cn else""
+            try:
+                ctx.bot.send_message(chat_id=oi,text=f"📩{sn}{ch_str}{LN}━{S}{LN}{e(txt)}{LN}├{S}{LN}{st}",parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
+                        [InlineKeyboardButton("📩查看",callback_data=f"v_{ti}")],
+                    ]))
+            except Exception as ex:log.error(f"转发:{ex}");up.message.reply_html("❌消息发送失败");return
+            up.message.reply_html(f"📢你也想要链接？{LN}t.me/{e(bu)}{LN}发送 /start 创建你的专属链接")
+            return
+    up.message.reply_html("📋<b>红色闪电</b>{LN}{LN}要创建链接请发送 /createlink 名称{LN}查看帮助 /help")
+
+# ─── 回调 ───
+def cbh(up,ctx):
+    q=up.callback_query;q.answer();d=q.data;uid=q.from_user.id
+    ud=goc(uid,up.effective_user.username or "",up.effective_user.first_name or "")
+    if d=="ho":
+        ua=gua(uid)
+        if ua>0:q.edit_message_text(f"⚡<b>欢迎回来</b>{LN}📩{ua}条未读",parse_mode="HTML",reply_markup=mk())
+        else:q.edit_message_text(f"👋<b>红色闪电</b>{LN}{LN}生成链接→发到群里→别人点开就能联系你",parse_mode="HTML",reply_markup=mk())
+        return
+    if d=="ls":
+        gs=ggl(ud["i"])
+        if not gs:q.edit_message_text("🔗暂无链接",parse_mode="HTML");return
+        lines=[f"🔗<b>链接</b>",f"━{SEP}"]
+        for g in gs:
+            lines.append(f"📁<b>{e(g['na'])}</b>")
+            for l in g["lks"]:lines.append(f"#{l['i']} {e(l.get('na','?'))} 📊{l['uc']}")
+        q.edit_message_text(LN.join(lines),parse_mode="HTML");return
+    if d=="st":
+        s=sts(uid);q.edit_message_text(f"📊<b>统计</b>{LN}👥{s['a']} 📩{s['ua']}{LN}💬{s['tl']} 🔗{s['lk']}{LN}📅今日{s['td']}",parse_mode="HTML",reply_markup=mk());return
+    if d=="ib":
+        ts=gts(ud["i"])
+        if not ts:q.edit_message_text("📩暂无消息",parse_mode="HTML",reply_markup=mk());return
+        lines=[f"📩<b>消息 ({len(ts)})</b>"]
+        for t in ts:
+            n=e(t.get("sn","")or t.get("su","?"))
+            st="📩未读"if t.get("hu")else"✅已读"
+            lines.append(f"#{t['id']} {n} {st}")
+        q.edit_message_text(LN.join(lines),parse_mode="HTML");return
+    if d=="se":
+        u=gu(uid)
+        def t(v):return"🟢"if v else"🔴"
+        q.edit_message_text(f"⚙️设置",parse_mode="HTML",reply_markup=sk());return
+    if d=="vi":
+        u=gu(uid)
+        if u and u.get("t")=="pro":q.edit_message_text("👑VIP",parse_mode="HTML");return
+        q.edit_message_text(f"👑VIP {P} USDT\n/vip",parse_mode="HTML");return
+    if d=="n":q.edit_message_text("/createlink 名称",parse_mode="HTML");return
+    if d.startswith("r_"):
+        ti=int(d.split("_")[1]);th=gt(ti)
+        if th:
+            ctx.user_data["reply_thread_id"]=ti
+            n=e(th.get("sn","")or"对方")
+            q.edit_message_text(f"✏️回复 {n}{LN}直接输入你的回复内容",parse_mode="HTML")
+        return
+    if d.startswith("b_"):
+        ti=int(d.split("_")[1]);th=gt(ti)
+        if th:
+            stb(ti,1);n=e(th.get("sn","")or"用户")
+            q.edit_message_text(f"🚫已拉黑 {n}",parse_mode="HTML",reply_markup=mk())
+        return
+    if d.startswith("v_"):
+        ti=int(d.split("_")[1]);th=gt(ti)
+        if th:
+            msgs=gtm(ti,5);lines=[f"📩<b>{e(th.get('sn','')or'会话')}</b>"]
+            for m in msgs:
+                who="你"if m["fo"]else"对方"
+                lines.append(f"{who}：{e(m['ct'][:30])}")
+            q.edit_message_text(LN.join(lines),parse_mode="HTML")
+        return
+    # 设置开关
+    tgs={"tn":("sn",1),"tc":("sc",1),"td":("dnd",0),"tg":("dg",0),"tno":("no",1)}
+    for k,(key,default)in tgs.items():
+        if d==k:
+            nv=1-ud.get(key,default);uu(uid,**{key:nv});u2=gu(uid)
+            def t(v):return"🟢"if v else"🔴"
+            q.edit_message_text(f"⚙️设置{LN}{t(u2.get('sn',1))}名称{LN}{t(u2.get('sc',1))}渠道{LN}{t(not u2.get('dnd',0))}免打扰{LN}{t(u2.get('dg',0))}日报{LN}{t(u2.get('no',1))}通知",parse_mode="HTML",reply_markup=sk());return
+
+def reg(dp):
+    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("vip",cv),("activate",ca),("help",ch)]:
+        dp.add_handler(CommandHandler(c,f))
+    dp.add_handler(MessageHandler(Filters.text,hm))
+    dp.add_handler(CallbackQueryHandler(cbh))
+    dp.add_error_handler(lambda u,c:log.error(f"ERR:{c.error}"))
+    log.info(f"✅全部处理器注册完成")
+
+def main():
+    init();up=Updater(token=T,use_context=True);reg(up.dispatcher)
+    up.start_polling();log.info(f"✅@{U} 运行中");up.idle()
+if __name__=="__main__":main()
