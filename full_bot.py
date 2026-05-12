@@ -343,7 +343,8 @@ def cbh(up,ctx):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
             ctx.user_data["reply_thread_id"]=ti
-            q.edit_message_text(f"✏️回复 {e(th.get('sn','')or'对方')}\n直接输入回复内容即可")
+            n=e(th.get("sn","")or"对方")
+            q.edit_message_text(f"✏️回复 {n}\n\n直接输入内容即可\n或使用 /reply {ti} 内容")
     elif d.startswith("b_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:stb(ti,1);q.edit_message_text(f"🚫已拉黑 {e(th.get('sn','')or'用户')}",reply_markup=mk())
