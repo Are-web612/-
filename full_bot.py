@@ -151,9 +151,9 @@ def cl(up,ctx):
     for l in lks:
         nm=e(l.get("na","未命名"))
         url=f"https://t.me/{U}?start=rl_{l['cc']}"
-        tagline="无需好友 · 点击链接进入私聊"
+        tagline="无需好友%C2%B7点击链接进入私聊"
         kb=InlineKeyboardMarkup([[InlineKeyboardButton("📤分享",url=f"https://t.me/share/url?url={url}&text={tagline}")],[InlineKeyboardButton("🗑删除",callback_data=f"dl_{l['i']}")]])
-        up.message.reply_text(f"✅ {nm}\n\n{url}\n\n{tagline}",reply_markup=kb)
+        up.message.reply_text(f"✅ {nm}\n\n{url}\n\n无需好友 · 点击链接进入私聊",reply_markup=kb)
 
 def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -365,8 +365,8 @@ def cbh(up,ctx):
         msgs=[];btns=[]
         for l in lks[:5]:
             url=f"https://t.me/{U}?start=rl_{l['cc']}"
-            tagline="无需好友 · 点击链接进入私聊"
-            msgs.append(f"✅ {e(l['na'])}\n\n{url}\n\n{tagline}")
+            tagline="无需好友%C2%B7点击链接进入私聊"
+            msgs.append(f"✅ {e(l['na'])}\n\n{url}\n\n无需好友 · 点击链接进入私聊")
             btns.append([InlineKeyboardButton(f"📤分享",url=f"https://t.me/share/url?url={url}&text={tagline}")])
         btns.append([InlineKeyboardButton("🔙返回",callback_data="ho")])
         q.edit_message_text("\n\n".join(msgs),reply_markup=InlineKeyboardMarkup(btns))
