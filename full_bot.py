@@ -496,7 +496,7 @@ def cbh(up,ctx):
                 who="我"if m["fo"]else n
                 tm=(m["ca"]or"")[11:16]
                 lines.append(f"\n{tm} {who}\n{e(m['ct'][:40])}")
-            mr(ti);#标记已读
+            mr(ti, uid);#标记已读
             q.edit_message_text("\n".join(lines),reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("📋预设",callback_data=f"pr_{ti}")],
                 [InlineKeyboardButton("🔙列表",callback_data="ib"),InlineKeyboardButton("🗑清除",callback_data=f"delth_{ti}")],
