@@ -84,7 +84,10 @@ def sm(ti,fo,ct):
     d.commit();d.close()
 def gtm(ti,lm=50):d=c();rs=d.execute("SELECT*FROM m WHERE ti=? ORDER BY ca DESC LIMIT ?",(ti,lm)).fetchall();d.close();return[dict(r)for r in reversed(rs)]
 def gmc(ti):d=c();r=d.execute("SELECT COUNT(*)as c FROM m WHERE ti=? AND fo=0 AND ir=0",(ti,)).fetchone();d.close();return r["c"]if r else 0
-def mr(ti,oi=None):d=c();d.execute("UPDATE m SET ir=1 WHERE ti=? AND fo=0",(ti,));if oi:d.execute("UPDATE th SET hu=0 WHERE id=? AND oi=?",(ti,oi));d.commit();d.close()
+def mr(ti,oi=None):
+    d=c();d.execute("UPDATE m SET ir=1 WHERE ti=? AND fo=0",(ti,))
+    if oi:d.execute("UPDATE th SET hu=0 WHERE id=? AND oi=?",(ti,oi))
+    d.commit();d.close()
 def gua(ui):d=c();r=d.execute("SELECT COUNT(*)as c FROM th WHERE oi=? AND bl=0 AND hu=1",(ui,)).fetchone();d.close();return r["c"]if r else 0
 def sts(ui):
     d=c()
@@ -135,9 +138,9 @@ def cc(up,ctx):
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
     nm=" ".join(ctx.args)if ctx.args else"链接"
     lk=al(ud["i"],nm)
-    tagline=f"\n\n📬 点击此链接可直接联系我，无需加好友\n{_e(f'https://t.me/{U}?start=rl_{lk[\"cc\"]}')}"
+    tagline=f"\n\n📬 点击此链接可直接联系我，无需加好友\nhttps://t.me/{U}?start=rl_{lk['cc']}"
     intro=ud.get("intro","")
-    if intro:tagline+=f"\n\n📋 推广文案（可 /intro 修改）\n{_e(intro)}\n{_e(f'https://t.me/{U}?start=rl_{lk[\"cc\"]}')}"
+    if intro:tagline+=f"\n\n📋 推广文案（可 /intro 修改）\n{_e(intro)}\nhttps://t.me/{U}?start=rl_{lk['cc']}"
     up.message.reply_text(f"✅ 链接已创建：{e(nm)}\n{tagline}")
 
 def cl(up,ctx):
