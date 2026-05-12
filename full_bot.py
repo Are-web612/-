@@ -159,18 +159,19 @@ def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     ts=gts(ud["i"])
     if not ts:up.message.reply_text("📩 暂无消息");return
-    msg=f"👥 联系人（{len(ts)}）"
+    msg=f"👥 联系人（{len(ts)}）\n点击直接进入对话"
     for t in ts[:8]:
         n=e(t.get("sn","")or t.get("su","未知"))
         unread=t.get("hu",0)
-        badge=f"  🔴{t['mc']}"if unread else""
+        badge=f"  🔴"if unread else""
         lt=(t.get("lt","")or"")[11:16]
-        # 获取最后一条消息预览
         last_msgs=gtm(t['id'],1)
         preview=e(last_msgs[0]['ct'][:25])if last_msgs else""
         msg+=f"\n\n{n}{badge}\n{preview}\n{lt}"
-    msg+="\n—\n回复：/reply 会话ID 内容"
-    up.message.reply_text(msg)
+    msg+="\n—\n点击上方名称进入对话"
+    # 每个联系人一个按钮
+    btns=[[InlineKeyboardButton(f"💬{e(t.get('sn','')or t.get('su','?'))}",callback_data=f"chat_{t['id']}")]for t in ts[:8]]
+    up.message.reply_text(msg,reply_markup=InlineKeyboardMarkup(btns))
 
 def cst(up,ctx):
     s=sts(up.effective_user.id)
@@ -229,6 +230,26 @@ def cub(up,ctx):
     th=gt(ti)
     if not th:up.message.reply_text("❌会话不存在");return
     stb(ti,0);up.message.reply_text(f"✅已解除拉黑 {e(th.get('sn','')or th.get('su','用户'))}")
+def chist(up,ctx):
+    if not ctx.args:up.message.reply_text("/history 会话ID");return
+    try:ti=int(ctx.args[0])
+    except:up.message.reply_text("❌ID必须是数字");return
+    th=gt(ti)
+    if not th:up.message.reply_text("❌会话不存在");return
+    msgs=gtm(ti,10);n=e(th.get("sn","")or"对方")
+    lines=[f"💬 {n}（共{th['mc']}条）"]
+    for m in reversed(msgs):
+        who="我"if m["fo"]else n
+        tm=(m["ca"]or"")[11:16]
+        lines.append(f"{tm} {who}：{e(m['ct'][:50])}")
+    up.message.reply_text("\n".join(lines))
+def cblocks(up,ctx):
+    ts=gbt(up.effective_user.id)
+    if not ts:up.message.reply_text("🚫 黑名单为空");return
+    lines=["🚫 已拉黑"]
+    for t in ts:lines.append(f"#{t['id']} {e(t.get('sn','')or t.get('su','未知'))}")
+    lines.append("\n/unblock id 解除")
+    up.message.reply_text("\n".join(lines))
 def cv(up,ctx):
     u=gu(up.effective_user.id)
     if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP");return
@@ -277,6 +298,20 @@ def ch(up,ctx):
         "/help  帮助")
 
 def hm(up,ctx):
+    # 处理对话模式（点了联系人后直接聊）
+    cc=ctx.user_data.get("current_chat")
+    if cc:
+        th=gt(cc)
+        if th:
+            txt=up.message.text or""
+            sm(cc,True,txt);mr(cc,up.effective_user.id)
+            try:
+                on=th.get("sn","")or"对方"
+                ctx.bot.send_message(chat_id=th["si"],text=f"💬 {txt}")
+                up.message.reply_text("✅已发送",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙返回联系人",callback_data="ib")]]))
+            except:up.message.reply_text("❌发送失败")
+        else:ctx.user_data.pop("current_chat",None)
+        return
     # 处理主人回复（点击"回复"按钮后）
     rtid=ctx.user_data.get("reply_thread_id")
     if rtid:
@@ -350,6 +385,38 @@ def cbh(up,ctx):
         if u and u.get("t")=="pro":q.edit_message_text("👑你是VIP",reply_markup=mk());return
         q.edit_message_text(f"👑VIP {P} USDT永久\n/vip 查看详情",reply_markup=mk())
     elif d=="n":q.edit_message_text("/createlink 名称");return
+    elif d.startswith("chat_"):
+        ti=int(d.split("_")[1]);th=gt(ti)
+        if th:
+            ctx.user_data["current_chat"]=ti
+            n=e(th.get("sn","")or"对方")
+            # 显示最近消息
+            msgs=gtm(ti,5);lines=[f"💬 {n}"]
+            for m in reversed(msgs):
+                who="我"if m["fo"]else n
+                lines.append(f"{who}：{e(m['ct'][:40])}")
+            mr(ti);#标记已读
+            q.edit_message_text("\n".join(lines),reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📤回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🔙列表",callback_data="ib")],
+                [InlineKeyboardButton("📋预设回复",callback_data=f"pr_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
+            ]))
+    elif d.startswith("pr_"):
+        ti=int(d.split("_")[1])
+        q.edit_message_text("📋 预设回复",reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("好的👌",callback_data=f"sendpr_{ti}_好的，收到")],
+            [InlineKeyboardButton("稍后回复⏳",callback_data=f"sendpr_{ti}_稍后回复你")],
+            [InlineKeyboardButton("加微信📱",callback_data=f"sendpr_{ti}_方便加个微信吗")],
+            [InlineKeyboardButton("🔙返回",callback_data=f"chat_{ti}")],
+        ]))
+    elif d.startswith("sendpr_"):
+        parts=d.split("_",2)
+        if len(parts)>=3:
+            ti=int(parts[1]);text=parts[2];th=gt(ti)
+            if th:
+                sm(ti,True,text);mr(ti,uid)
+                try:ctx.bot.send_message(chat_id=th["si"],text=f"💬 {text}")
+                except:pass
+                q.edit_message_text("✅已发送")
     elif d.startswith("r_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
@@ -377,7 +444,7 @@ def cbh(up,ctx):
                 return
 
 def reg(dp):
-    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("vip",cv),("activate",ca),("help",ch)]:
+    for c,f in[("start",cs),("createlink",cc),("link",cl),("inbox",ci),("messages",ci),("stats",cst),("settings",cse),("intro",cintro),("introclear",ci_clr),("addgroup",cag),("groups",cgg),("rmgroup",crg),("reply",cr),("block",cbk),("unblock",cub),("history",chist),("blocks",cblocks),("vip",cv),("activate",ca),("help",ch)]:
         dp.add_handler(CommandHandler(c,f))
     dp.add_handler(MessageHandler(Filters.text,hm))
     dp.add_handler(CallbackQueryHandler(cbh))
