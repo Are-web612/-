@@ -164,12 +164,11 @@ def ci(up,ctx):
     for t in ts[:10]:
         n=e(t.get("sn","")or t.get("su","未知"))
         unread=t.get("hu",0)
-        badge="🔴"if unread else""
+        badge="🔴"if unread else"✓"
         lt=(t.get("lt","")or"")[11:16]
         last_msgs=gtm(t['id'],1)
         preview=e(last_msgs[0]['ct'][:20])if last_msgs else""
-        count=f"({t['mc']})"if t['mc']>0 else""
-        msg+=f"\n{badge}{n}{count}\n{preview}  {lt}"
+        msg+=f"\n{badge}{n}\n{preview}  {lt}"
         btns.append([InlineKeyboardButton(f"{badge}{n}",callback_data=f"chat_{t['id']}")])
     msg+="\n—\n点联系人进入对话"
     up.message.reply_text(msg,reply_markup=InlineKeyboardMarkup(btns))
@@ -312,7 +311,7 @@ def hm(up,ctx):
                 on=th.get("sn","")or"对方"
                 ctx.bot.send_message(chat_id=th["si"],text=txt)
                 n=e(th.get("sn","")or"对方")
-                up.message.reply_text(f"你  {datetime.now().strftime('%H:%M')}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💬继续回复",callback_data=f"chat_{cc}"),InlineKeyboardButton("🔙列表",callback_data="ib")]]))
+                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}\n✓",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💬继续回复",callback_data=f"chat_{cc}"),InlineKeyboardButton("🔙列表",callback_data="ib")]]))
             except:up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("current_chat",None)
         return
@@ -325,8 +324,8 @@ def hm(up,ctx):
             sm(rtid,True,txt);mr(rtid,up.effective_user.id)
             try:
                 on=th.get("sn","")or"对方"
-                ctx.bot.send_message(chat_id=th["si"],text=f"💬 {txt}")
-                up.message.reply_text("✅已回复")
+                ctx.bot.send_message(chat_id=th["si"],text=txt)
+                up.message.reply_text(f"{datetime.now().strftime('%H:%M')}\n{txt}\n✓✓")
             except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("reply_thread_id",None)
         return
@@ -378,7 +377,7 @@ def cbh(up,ctx):
         msg="👥 联系人";btns=[]
         for t in ts[:10]:
             n=e(t.get("sn","")or t.get("su","?"))
-            b="🔴"if t.get("hu")else""
+            b="🔴"if t.get("hu")else"✓"
             lt=(t.get("lt","")or"")[11:16]
             lm=gtm(t['id'],1)
             p=e(lm[0]['ct'][:20])if lm else""
@@ -422,9 +421,9 @@ def cbh(up,ctx):
             ti=int(parts[1]);text=parts[2];th=gt(ti)
             if th:
                 sm(ti,True,text);mr(ti,uid)
-                try:ctx.bot.send_message(chat_id=th["si"],text=f"💬 {text}")
+                try:ctx.bot.send_message(chat_id=th["si"],text=text)
                 except:pass
-                q.edit_message_text("✅已发送")
+                q.edit_message_text(f"{text}\n✓✓")
     elif d.startswith("r_"):
         ti=int(d.split("_")[1]);th=gt(ti)
         if th:
