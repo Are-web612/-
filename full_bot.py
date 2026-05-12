@@ -138,10 +138,10 @@ def cc(up,ctx):
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
     nm=" ".join(ctx.args)if ctx.args else"链接"
     lk=al(ud["i"],nm)
-    tagline=f"\n\n📬 点击此链接可直接联系我，无需加好友\nhttps://t.me/{U}?start=rl_{lk['cc']}"
+    tagline=f"\n━━━━━━━━━━━━━━━━━━\n无需好友 · 无需双向\n点击链接即可进入私聊通道\nhttps://t.me/{U}?start=rl_{lk['cc']}"
     intro=ud.get("intro","")
     if intro:tagline+=f"\n\n📋 推广文案（可 /intro 修改）\n{_e(intro)}\nhttps://t.me/{U}?start=rl_{lk['cc']}"
-    up.message.reply_text(f"✅ 链接已创建：{e(nm)}\n{tagline}")
+    up.message.reply_text(f"✅ 链接已创建：{e(nm)}{tagline}")
 
 def cl(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -288,7 +288,7 @@ def hm(up,ctx):
             sm(rtid,True,txt);mr(rtid,up.effective_user.id)
             try:
                 on=th.get("sn","")or"对方"
-                ctx.bot.send_message(chat_id=th["si"],text=f"💬 {e(on)} 回复了你\n\n{txt}")
+                ctx.bot.send_message(chat_id=th["si"],text=f"💬 回复\n━━━━━━━━━━━━━━━━━━\n{txt}")
                 up.message.reply_text("✅已回复")
             except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("reply_thread_id",None)
@@ -304,7 +304,7 @@ def hm(up,ctx):
             sn=e(th.get("sn","")or th.get("su","用户"))
             if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
             try:
-                ctx.bot.send_message(chat_id=oi,text=f"📩 {sn} 发来消息：\n\n{txt}",reply_markup=InlineKeyboardMarkup([
+                ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n━━━━━━━━━━━━━━━━━━\n{txt}",reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
                 ]))
             except:up.message.reply_text("❌消息发送失败")
