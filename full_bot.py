@@ -279,6 +279,21 @@ def ch(up,ctx):
         "/help  帮助")
 
 def hm(up,ctx):
+    # 处理主人回复（点击"回复"按钮后）
+    rtid=ctx.user_data.get("reply_thread_id")
+    if rtid:
+        th=gt(rtid)
+        if th:
+            txt=up.message.text or""
+            sm(rtid,True,txt);mr(rtid,up.effective_user.id)
+            try:
+                on=th.get("sn","")or"对方"
+                ctx.bot.send_message(chat_id=th["si"],text=f"💬 {e(on)} 回复了你\n\n{txt}")
+                up.message.reply_text("✅已回复")
+            except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_text("❌发送失败")
+        else:ctx.user_data.pop("reply_thread_id",None)
+        return
+    # 处理发送者发消息（通过链接）
     ti=ctx.user_data.get("ti");oi=ctx.user_data.get("oi")
     if ti and oi:
         th=gt(ti)
@@ -288,14 +303,13 @@ def hm(up,ctx):
             txt=up.message.text or"";sm(ti,False,txt)
             sn=e(th.get("sn","")or th.get("su","用户"))
             if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
-            cn="";lc=th.get("lc","")
-            if lc:lk=glc(lc);cn=lk.get("na","")if lk else""
             try:
                 ctx.bot.send_message(chat_id=oi,text=f"📩 {sn} 发来消息：\n\n{txt}",reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
                 ]))
-            except:up.message.reply_text("❌消息发送失败");return
+            except:up.message.reply_text("❌消息发送失败")
             return
+    # 默认提示
     up.message.reply_text("📋 使用 /createlink 创建链接，或 /help 查看帮助")
 
 def cbh(up,ctx):
