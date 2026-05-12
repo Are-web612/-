@@ -130,18 +130,18 @@ def cs(up,ctx):
             up.message.reply_text(msg);return
         up.message.reply_text("❌链接无效");return
     ua=gua(u.id)
-    if ua>0:up.message.reply_text(f"⚡欢迎回来！\n你有 {ua} 条未读消息",reply_markup=mk())
-    else:up.message.reply_text(f"👋 欢迎使用红色闪电！\n\n创建链接 → 发到群里 → 别人点开就能联系你，无需加好友。\n\n🚀 /createlink 群名  创建你的第一个链接\n🔗 /link  查看所有链接\n📊 /stats  数据统计",reply_markup=mk())
+    if ua>0:up.message.reply_text(f"⚡ 你有 {ua} 条未读消息",reply_markup=mk())
+    else:up.message.reply_text(f"👋 欢迎使用红色闪电\n\n/createlink 名称  创建链接\n/link  管理链接\n/inbox  消息列表\n/vip  会员\n/help  帮助",reply_markup=mk())
 
 def cc(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     if not tk(ud["i"]):up.message.reply_text("⏰ 试用已结束，/vip 付费后继续使用");return
     nm=" ".join(ctx.args)if ctx.args else"链接"
     lk=al(ud["i"],nm)
-    tagline=f"\n━━━━━━━━━━━━━━━━━━\n无需好友 · 无需双向\n点击链接即可进入私聊通道\nhttps://t.me/{U}?start=rl_{lk['cc']}"
+    tagline=f"\nhttps://t.me/{U}?start=rl_{lk['cc']}\n━━━━━━━━━━━━━━━━━━\n无需好友 · 点击链接进入私聊"
     intro=ud.get("intro","")
-    if intro:tagline+=f"\n\n📋 推广文案（可 /intro 修改）\n{_e(intro)}\nhttps://t.me/{U}?start=rl_{lk['cc']}"
-    up.message.reply_text(f"✅ 链接已创建：{e(nm)}{tagline}")
+    if intro:tagline+=f"\n\n/intro 修改介绍\n{_e(intro)}"
+    up.message.reply_text(f"✅ {e(nm)}\n{tagline}")
 
 def cl(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -226,9 +226,9 @@ def cub(up,ctx):
     stb(ti,0);up.message.reply_text(f"✅已解除拉黑 {e(th.get('sn','')or th.get('su','用户'))}")
 def cv(up,ctx):
     u=gu(up.effective_user.id)
-    if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP用户，感谢支持！");return
+    if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP");return
     r=tl(up.effective_user.id)
-    up.message.reply_text(f"👑 红色闪电 VIP\n\n⏰ 试用剩余：{r}\n💰 VIP价格：{P} USDT 永久买断\n\n转账 USDT-TRC20 到：\n{W}\n\n💡 转账后发送 /activate TXID")
+    up.message.reply_text(f"⏰ {r}\n💰 {P} USDT 永久\n\n{W}\n\n/activate TXID")
 
 def ca(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -256,26 +256,19 @@ def ca(up,ctx):
 
 def ch(up,ctx):
     up.message.reply_text(
-        "📋 红色闪电 - 帮助\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        "📌 核心命令\n"
         "/createlink 名称  创建链接\n"
-        "/link  查看所有链接\n"
-        "/inbox  消息列表\n"
-        "/reply id 内容  回复某人\n"
-        "/intro 介绍  设置个人介绍\n\n"
-        "📌 链接分组\n"
-        "/addgroup 名称  创建分组\n"
-        "/groups  查看分组\n"
-        "/rmgroup id  删除分组\n\n"
-        "📌 VIP\n"
-        "/vip  查看价格和支付方式\n"
-        "/activate TXID  激活VIP\n\n"
-        "📌 其他\n"
+        "/link  查看链接\n"
+        "/inbox  消息\n"
+        "/reply id 内容  回复\n"
+        "/intro 介绍  设置介绍\n"
+        "/addgroup 名称  分组\n"
+        "/groups  分组列表\n"
+        "/vip  会员\n"
+        "/activate TXID  激活\n"
+        "/stats  统计\n"
+        "/settings  设置\n"
         "/block id  拉黑\n"
         "/unblock id  解除\n"
-        "/stats  数据统计\n"
-        "/settings  设置面板\n"
         "/help  帮助")
 
 def hm(up,ctx):
@@ -288,7 +281,7 @@ def hm(up,ctx):
             sm(rtid,True,txt);mr(rtid,up.effective_user.id)
             try:
                 on=th.get("sn","")or"对方"
-                ctx.bot.send_message(chat_id=th["si"],text=f"💬 回复\n━━━━━━━━━━━━━━━━━━\n{txt}")
+                ctx.bot.send_message(chat_id=th["si"],text=f"💬 {txt}")
                 up.message.reply_text("✅已回复")
             except Exception as ex:log.error(f"回复失败:{ex}");up.message.reply_text("❌发送失败")
         else:ctx.user_data.pop("reply_thread_id",None)
@@ -304,7 +297,7 @@ def hm(up,ctx):
             sn=e(th.get("sn","")or th.get("su","用户"))
             if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
             try:
-                ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n━━━━━━━━━━━━━━━━━━\n{txt}",reply_markup=InlineKeyboardMarkup([
+                ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
                 ]))
             except:up.message.reply_text("❌消息发送失败")
