@@ -302,9 +302,14 @@ def hm(up,ctx):
             sn=e(th.get("sn","")or th.get("su","用户"))
             if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
             try:
-                ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")],
-                ]))
+                # 尝试获取发送者头像
+                try:
+                    photos=ctx.bot.get_user_profile_photos(th["si"],limit=1)
+                    if photos and photos.photos:
+                        ctx.bot.send_photo(chat_id=oi,photo=photos.photos[0][-1].file_id,caption=f"{sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")]]))
+                    else:raise Exception("no photo")
+                except:
+                    ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")]]))
             except:up.message.reply_text("❌消息发送失败")
             return
     # 默认提示
