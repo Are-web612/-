@@ -135,14 +135,12 @@ def cs(up,ctx):
     else:
         up.message.reply_text(
             "👋 红色闪电\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "无需加好友，点击链接直接私聊\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "▸ /createlink 名称  创建链接\n"
-            "▸ /link  管理所有链接\n"
-            "▸ /inbox  联系人列表\n"
-            "▸ /vip  升级VIP\n"
-            "▸ /help  全部命令"
+            "无需加好友，点击链接直接私聊\n\n"
+            "/createlink 名称 - 创建链接\n"
+            "/link - 管理所有链接\n"
+            "/inbox - 联系人列表\n"
+            "/vip - 升级VIP\n"
+            "/help - 全部命令"
         ,reply_markup=mk())
 
 def cc(up,ctx):
@@ -267,9 +265,18 @@ def cblocks(up,ctx):
     up.message.reply_text("\n".join(lines))
 def cv(up,ctx):
     u=gu(up.effective_user.id)
-    if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP");return
+    if u and u.get("t")=="pro":up.message.reply_text("👑 你是VIP，感谢支持！\n\n所有功能永久可用，无任何限制。");return
     r=tl(up.effective_user.id)
-    up.message.reply_text(f"⏰ {r}\n💰 {P} USDT 永久\n\n{W}\n\n/activate TXID")
+    up.message.reply_text(
+        "👑 VIP会员\n\n"
+        "免费版：24小时试用，到期后需付费\n"
+        "VIP：$5 USDT 永久买断\n\n"
+        "转账 USDT-TRC20 到以下地址：\n"
+        f"{W}\n\n"
+        "转账后发送：\n"
+        "/activate TXID\n\n"
+        "TXID 是交易哈希，转账后可在钱包复制。\n"
+        "Bot 会自动验证链上交易，秒激活。")
 
 def ca(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
@@ -297,25 +304,25 @@ def ca(up,ctx):
 
 def ch(up,ctx):
     up.message.reply_text(
-        "📋 红色闪电 - 全部命令\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        "📌 链接管理\n"
-        "/createlink 名称  创建链接\n"
-        "/link  查看所有链接\n"
-        "/addgroup 名称  创建分组\n"
-        "/groups  查看分组\n\n"
-        "📌 消息聊天\n"
-        "/inbox  联系人列表\n"
-        "/reply id 内容  回复消息\n"
-        "/history id  聊天记录\n"
-        "/blocks  黑名单\n\n"
-        "📌 设置与其他\n"
-        "/intro 介绍  个人简介\n"
-        "/settings  设置面板\n"
-        "/stats  使用统计\n"
-        "/vip  升级VIP\n"
-        "/activate TXID  激活VIP\n"
-        "/help  帮助")
+        "📋 全部命令\n\n"
+        "【链接管理】\n"
+        "/createlink 名称 - 创建分享链接\n"
+        "/link - 查看所有链接\n"
+        "/addgroup 名称 - 创建链接分组\n"
+        "/groups - 查看分组\n\n"
+        "【消息聊天】\n"
+        "/inbox - 联系人列表\n"
+        "/reply id 内容 - 回复某人的消息\n"
+        "/history id - 查看聊天历史\n"
+        "/blocks - 黑名单管理\n\n"
+        "【VIP会员】\n"
+        "/vip - 查看VIP价格和介绍\n"
+        "/activate TXID - 输入交易哈希激活\n\n"
+        "【其他】\n"
+        "/intro 介绍 - 设置个人简介\n"
+        "/settings - 设置面板\n"
+        "/stats - 使用统计\n"
+        "/help - 帮助")
 
 def hm(up,ctx):
     # 处理对话模式（点了联系人后直接聊）
