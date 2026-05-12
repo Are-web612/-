@@ -158,16 +158,15 @@ def cl(up,ctx):
 def ci(up,ctx):
     u=up.effective_user;ud=goc(u.id,u.username or"",u.first_name or"")
     ts=gts(ud["i"])
-    if not ts:up.message.reply_text("📩 还没有人联系你");return
-    lines=[f"📩 消息列表（共{len(ts)}个会话）"]
+    if not ts:up.message.reply_text("📩 暂无消息");return
+    lines=[f"📩 {len(ts)}个会话"]
     for t in ts:
         n=e(t.get("sn","")or t.get("su","未知"))
-        un=f"(@{e(t.get('su',''))})"if t.get("su")else""
         st="📩未读"if t.get("hu")else"✅已读"
         lt=(t.get("lt","")or"")[:16].replace("T"," ")
-        lines.append(f"\n#{t['id']} {n}{un} {st}\n   💬{t['mc']}条消息 · {lt}")
-    lines.append("\n💡 回复：/reply 会话ID 内容")
-    up.message.reply_text("\n".join(lines))
+        lines.append(f"#{t['id']} {n} {st}\n{t['mc']}条 · {lt}")
+    lines.append("—\n/reply id 回复")
+    up.message.reply_text("\n\n".join(lines))
 
 def cst(up,ctx):
     s=sts(up.effective_user.id)
@@ -300,7 +299,7 @@ def hm(up,ctx):
             if th.get("su"):sn=f"{sn}(@{e(th['su'])})"
             try:
                 ctx.bot.send_message(chat_id=oi,text=f"📩 {sn}\n{txt}",reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}"),InlineKeyboardButton("🚫拉黑",callback_data=f"b_{ti}")],
+                    [InlineKeyboardButton("✏️回复",callback_data=f"r_{ti}")],
                 ]))
             except:up.message.reply_text("❌消息发送失败")
             return
